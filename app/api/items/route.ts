@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-// Tạo danh sách 30 ảnh mock
+
 const allItems = Array.from({ length: 30 }, (_, i) => ({
   id: i + 1,
   title: `Image ${i + 1}`,
@@ -10,7 +10,7 @@ const allItems = Array.from({ length: 30 }, (_, i) => ({
   description: "Random demo image",
 }));
 
-// ✅ API GET (phân trang)
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const page = Number(searchParams.get("page") || "1");
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   });
 }
 
-// ✅ API POST (like)
+
 export async function POST(req: Request) {
   const { id } = await req.json();
   const item = allItems.find((it) => it.id === id);

@@ -11,7 +11,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   const [value, setValue] = useState("");
   const [debounced, setDebounced] = useState(value);
 
-  // ⏱ Debounce: chỉ gọi onSearch sau khi ngừng gõ 300ms
+  
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(value), 300);
     return () => clearTimeout(timer);

@@ -43,7 +43,7 @@ export default function Home() {
     .filter((item) => item.title.toLowerCase().includes(query.toLowerCase()))
     .filter((item) => (category === "all" ? true : item.category === category));
 
-  // ✅ Infinite scroll (kéo xuống tự load thêm)
+  
   useEffect(() => {
     if (!observerRef.current) return;
 
@@ -58,7 +58,7 @@ export default function Home() {
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage]);
 
-  // ✅ Loading state
+  
   if (isLoading)
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
@@ -68,20 +68,20 @@ export default function Home() {
       </div>
     );
 
-  // ✅ Error state
+ 
   if (isError)
     return <p className="text-center mt-10">Failed to load data 😢</p>;
 
-  // ✅ Giao diện chính
+
   return (
     <div>
-      {/* Thanh Search + Filter */}
+      {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row items-center gap-4 justify-between p-4">
         <SearchBar onSearch={setQuery} />
         <CategoryFilter categories={categories} onSelect={setCategory} />
       </div>
 
-      {/* Danh sách ảnh */}
+      {/* */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
         {filtered.map((item) => (
           <motion.div
@@ -92,7 +92,7 @@ export default function Home() {
           >
             <Card
               className="hover:shadow-xl transition cursor-pointer"
-              onClick={() => router.push(`/item/${item.id}`)} // ✅ Click để mở trang chi tiết
+              onClick={() => router.push(`/item/${item.id}`)} 
             >
               <CardHeader>
                 <CardTitle>{item.title}</CardTitle>
@@ -115,7 +115,7 @@ export default function Home() {
           </motion.div>
         ))}
 
-        {/* phần tử đánh dấu đáy để IntersectionObserver theo dõi */}
+        {/*  */}
         <div ref={observerRef} className="h-10" />
 
         {isFetchingNextPage && (
@@ -128,7 +128,7 @@ export default function Home() {
   );
 }
 
-// ✅ Nút Like có animation
+
 function LikeButton({
   id,
   likes,
