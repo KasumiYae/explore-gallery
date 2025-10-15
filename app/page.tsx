@@ -1,103 +1,159 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useInfiniteItems } from "@/hooks/useInfiniteItems";
+import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+import { useLikeItem } from "@/hooks/useLikeItem";
+import SearchBar from "@/components/SearchBar";
+import CategoryFilter from "@/components/CategoryFilter";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+  } = useInfiniteItems();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("all");
+  const observerRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
+  const { mutate } = useLikeItem();
+
+  // ✅ Gộp dữ liệu từ nhiều trang
+  const items = data?.pages.flatMap((page) => page.items) ?? [];
+
+  // ✅ Lấy danh sách category duy nhất
+  const categories =
+    items.reduce<string[]>((acc, item) => {
+      if (!acc.includes(item.category)) acc.push(item.category);
+      return acc;
+    }, []) || [];
+
+  // ✅ Lọc theo search + category
+  const filtered = items
+    .filter((item) => item.title.toLowerCase().includes(query.toLowerCase()))
+    .filter((item) => (category === "all" ? true : item.category === category));
+
+  // ✅ Infinite scroll (kéo xuống tự load thêm)
+  useEffect(() => {
+    if (!observerRef.current) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      const first = entries[0];
+      if (first.isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    });
+
+    observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage]);
+
+  // ✅ Loading state
+  if (isLoading)
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-60 w-full rounded-lg" />
+        ))}
+      </div>
+    );
+
+  // ✅ Error state
+  if (isError)
+    return <p className="text-center mt-10">Failed to load data 😢</p>;
+
+  // ✅ Giao diện chính
+  return (
+    <div>
+      {/* Thanh Search + Filter */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 justify-between p-4">
+        <SearchBar onSearch={setQuery} />
+        <CategoryFilter categories={categories} onSelect={setCategory} />
+      </div>
+
+      {/* Danh sách ảnh */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+        {filtered.map((item) => (
+          <motion.div
+            key={item.id}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <Card
+              className="hover:shadow-xl transition cursor-pointer"
+              onClick={() => router.push(`/item/${item.id}`)} // ✅ Click để mở trang chi tiết
+            >
+              <CardHeader>
+                <CardTitle>{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <motion.img
+                  src={item.image}
+                  alt={item.title}
+                  className="rounded-lg w-full h-60 object-cover"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4 }}
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-sm text-gray-600">{item.category}</p>
+                  <LikeButton id={item.id} likes={item.likes} mutate={mutate} />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+
+        {/* phần tử đánh dấu đáy để IntersectionObserver theo dõi */}
+        <div ref={observerRef} className="h-10" />
+
+        {isFetchingNextPage && (
+          <div className="col-span-full text-center text-gray-500">
+            Loading more...
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+// ✅ Nút Like có animation
+function LikeButton({
+  id,
+  likes,
+  mutate,
+}: {
+  id: number;
+  likes: number;
+  mutate: any;
+}) {
+  return (
+    <motion.div
+      whileTap={{ scale: 1.3 }}
+      transition={{ type: "spring", stiffness: 200 }}
+    >
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          mutate(id);
+        }}
+        className="flex items-center gap-1 text-pink-600 hover:bg-pink-100"
+      >
+        <Heart size={16} /> {likes}
+      </Button>
+    </motion.div>
   );
 }
